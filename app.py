@@ -65,29 +65,6 @@ def load_css():
         margin-bottom: 0;
     }
     
-    /* Team credits styling */
-    .team-credits {
-        text-align: center;
-        padding: 1rem;
-        background: linear-gradient(135deg, var(--secondary-green), var(--primary-green));
-        border-radius: 10px;
-        margin: 2rem 0;
-        border: 1px solid var(--accent-green);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .team-credits p {
-        color: white;
-        font-size: 1.2rem;
-        margin: 0;
-        font-weight: 500;
-    }
-    
-    .team-credits .stars {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-    
     /* Section headers */
     .section-header {
         background: linear-gradient(90deg, var(--primary-green), transparent);
@@ -187,6 +164,10 @@ def load_css():
         margin-top: 3rem;
         border: 1px solid var(--secondary-green);
     }
+    
+    .footer-text {
+        color: white;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -201,18 +182,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ENHANCED HEADER WITH CREDITS ---
+# --- ENHANCED HEADER ---
 st.markdown("""
 <div class="main-header">
     <h1>🛰️ TerraScan</h1>
     <h3>AI-Powered Land Health Analysis</h3>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<div class="team-credits">
-    <div class="stars">🌟</div>
-    <p>Developed with passion by <strong>Rosemary Emeli</strong> and <strong>Gideon Thuku</strong></p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -225,7 +199,7 @@ if 'analysis_history' not in st.session_state:
     st.session_state.analysis_history = []
 
 # --- COMPREHENSIVE USER GUIDE ---
-with st.expander("Complete User Guide - Learn How to Use TerraScan", expanded=True):
+with st.expander("📚 Complete User Guide - Learn How to Use TerraScan", expanded=True):
     st.markdown("""
     <div class="step-container">
         <div class="step-title"><span class="step-number">1</span> Understanding TerraScan</div>
@@ -240,7 +214,7 @@ with st.expander("Complete User Guide - Learn How to Use TerraScan", expanded=Tr
         <div class="step-title"><span class="step-number">2</span> Step 1: Select Your Area</div>
         <div class="step-description">
         <strong>How to draw on the map:</strong>
-        - Click the polygon tool (🟢) or rectangle tool (⬜) in the map toolbar
+        - Click the <span style="color: #4CAF50;">■ polygon tool</span> or <span style="color: #4CAF50;">□ rectangle tool</span> in the map toolbar
         - Draw a shape around the area you want to analyze
         - Make sure the area is large enough for accurate analysis (at least 1km x 1km)
         - You can edit or delete your drawing if needed
@@ -284,50 +258,6 @@ with st.expander("Complete User Guide - Learn How to Use TerraScan", expanded=Tr
     </div>
     """, unsafe_allow_html=True)
 
-# --- ANALYSIS CONTROLS SECTION ---
-st.markdown("""
-<div class="section-header">
-    <h2>🎛️ Analysis Controls</h2>
-</div>
-""", unsafe_allow_html=True)
-
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    st.markdown("#### 📊 Set Analysis Parameters")
-    
-    ndvi_threshold = st.slider(
-        "**Vegetation Health Sensitivity (NDVI Threshold)**", 
-        min_value=0.0, max_value=0.5, value=0.2, step=0.05,
-        help="""**How to choose:** 
-- 0.0-0.1: Very sensitive (detects slight stress)
-- 0.1-0.2: Balanced (recommended for most areas)  
-- 0.2-0.3: Moderate (detects significant issues)
-- 0.3-0.5: Strict (only severe degradation)"""
-    )
-    
-    # Visual threshold indicator
-    threshold_col1, threshold_col2, threshold_col3, threshold_col4 = st.columns(4)
-    
-    with threshold_col1:
-        if ndvi_threshold <= 0.1:
-            st.success("**Very Sensitive**")
-        else:
-            st.info("Standard")
-    
-    with threshold_col2:
-        st.metric("Current Setting", f"NDVI {ndvi_threshold}")
-
-with col2:
-    st.markdown("#### ⚡ Start Analysis")
-    analyze_button = st.button("Start Satellite Analysis", type="primary", use_container_width=True)
-    
-    st.markdown("#### 🔄 Management")
-    if st.button("🔄 Clear Results", use_container_width=True):
-        st.session_state.aoi = None
-        st.session_state.analysis_results = None
-        st.rerun()
-
 # --- INTERACTIVE MAP SECTION ---
 st.markdown("""
 <div class="section-header">
@@ -337,8 +267,8 @@ st.markdown("""
 
 st.markdown("""
 **Instructions:** Use the drawing tools in the top-right corner of the map below to select your area of interest.
-- Click the **polygon tool** (🟢) for custom shapes
-- Click the **rectangle tool** (⬜) for rectangular areas
+- Click the **polygon tool** (■) for custom shapes
+- Click the **rectangle tool** (□) for rectangular areas
 - Draw on the map to define your analysis boundary
 """)
 
@@ -398,17 +328,63 @@ if map_data and map_data.get("all_drawings"):
     
     - **Boundary Points:** {area_size} coordinates
     - **Status:** Ready for analysis
-    - **Next Step:** Click 'Start Satellite Analysis' above
+    - **Next Step:** Set parameters below and click 'Start Analysis'
     """)
     
     # Show quick area stats
     if area_size > 4:  # Basic polygon
         st.info("🗺️ **Tip:** Your area has been captured. For best results, ensure your area covers at least 1 square kilometer.")
 
+# --- ANALYSIS CONTROLS SECTION - MOVED BELOW MAP ---
+st.markdown("""
+<div class="section-header">
+    <h2>🎛️ Step 2: Set Analysis Parameters</h2>
+</div>
+""", unsafe_allow_html=True)
+
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    st.markdown("#### 📊 Analysis Configuration")
+    
+    ndvi_threshold = st.slider(
+        "**Vegetation Health Sensitivity (NDVI Threshold)**", 
+        min_value=0.0, max_value=0.5, value=0.2, step=0.05,
+        help="""**How to choose:** 
+- 0.0-0.1: Very sensitive (detects slight stress)
+- 0.1-0.2: Balanced (recommended for most areas)  
+- 0.2-0.3: Moderate (detects significant issues)
+- 0.3-0.5: Strict (only severe degradation)"""
+    )
+    
+    # Visual threshold indicator
+    threshold_col1, threshold_col2 = st.columns(2)
+    
+    with threshold_col1:
+        if ndvi_threshold <= 0.1:
+            st.success("**Very Sensitive**")
+        elif ndvi_threshold <= 0.2:
+            st.info("**Balanced**")
+        else:
+            st.warning("**Strict**")
+    
+    with threshold_col2:
+        st.metric("Current Setting", f"NDVI {ndvi_threshold}")
+
+with col2:
+    st.markdown("#### ⚡ Start Analysis")
+    analyze_button = st.button("🚀 Start Satellite Analysis", type="primary", use_container_width=True)
+    
+    st.markdown("#### 🔄 Management")
+    if st.button("🔄 Clear Results", use_container_width=True):
+        st.session_state.aoi = None
+        st.session_state.analysis_results = None
+        st.rerun()
+
 # --- ANALYSIS EXECUTION SECTION ---
 st.markdown("""
 <div class="section-header">
-    <h2>🔍 Step 2: Run Satellite Analysis</h2>
+    <h2>🔍 Step 3: Run Satellite Analysis</h2>
 </div>
 """, unsafe_allow_html=True)
 
@@ -499,7 +475,7 @@ if st.session_state.analysis_results:
     
     st.markdown("""
     <div class="section-header">
-        <h2>📊 Step 3: Review Your Analysis Results</h2>
+        <h2>📊 Step 4: Review Your Analysis Results</h2>
     </div>
     """, unsafe_allow_html=True)
     
@@ -634,7 +610,7 @@ if st.session_state.analysis_results:
     # Export Section
     st.markdown("""
     <div class="section-header">
-        <h2>📤 Step 4: Export Your Results</h2>
+        <h2>📤 Export Your Results</h2>
     </div>
     """, unsafe_allow_html=True)
     
@@ -678,12 +654,12 @@ else:
 # --- PROFESSIONAL FOOTER ---
 st.markdown("""
 <div class="custom-footer">
-    <h4>🛰️ TerraScan Professional</h4>
-    <p><strong>Advanced Land Health Monitoring Platform</strong></p>
-    <p style='font-size: 0.9em; color: #CCCCCC;'>
-        Powered by Planet Satellite Imagery 🌍 | Built with Streamlit ⚡<br>
-        <span style='color: #4CAF50;'>🌟 Developed with excellence by Rosemary Emeli and Gideon Thuku</span><br>
-        Making professional land monitoring accessible to everyone
-    </p>
+    <div class="footer-text">
+        <h4>🛰️ TerraScan Professional</h4>
+        <p><strong>Advanced Land Health Monitoring Platform</strong></p>
+        <p style='font-size: 0.9em; color: #CCCCCC;'>
+            Powered by Planet Satellite Imagery 🌍 | Built with Streamlit ⚡
+        </p>
+    </div>
 </div>
 """, unsafe_allow_html=True)
