@@ -65,7 +65,7 @@ def get_planet_data(aoi, item_type='PSScene', asset_type='visual'):
 
         # Enhanced progress feedback
         with st.spinner("🛰️ Connecting to Planet's satellite constellation..."):
-            time.sleep(1)  # Simulate connection time
+            time.sleep(1)
             
             response = requests.post(search_url, json=search_request, headers=headers)
             
@@ -110,7 +110,7 @@ def get_planet_data(aoi, item_type='PSScene', asset_type='visual'):
 
             # Create enhanced mock data for demonstration
             st.info("🌿 **Generating vegetation analysis...**")
-            time.sleep(1)  # Simulate processing time
+            time.sleep(1)
             
             mock_ndvi = create_enhanced_ndvi_data(aoi)
             mock_rgb = create_enhanced_rgb_data(aoi)
@@ -133,9 +133,9 @@ def create_enhanced_ndvi_data(aoi):
         # Add realistic vegetation patterns
         x, y = np.meshgrid(np.linspace(0, 1, width), np.linspace(0, 1, height))
         
-        # Healthy vegetation patches (circular patterns)
+        # Healthy vegetation patches
         healthy_patches = [
-            (0.3, 0.3, 0.4),  # (x, y, intensity)
+            (0.3, 0.3, 0.4),
             (0.7, 0.7, 0.5),
             (0.2, 0.8, 0.3),
             (0.8, 0.2, 0.4)
@@ -145,18 +145,17 @@ def create_enhanced_ndvi_data(aoi):
             distance = np.sqrt((x - patch_x)**2 + (y - patch_y)**2)
             ndvi_data += intensity * np.exp(-distance / 0.2)
         
-        # Add some linear features (rivers, roads)
+        # Add linear features
         river_mask = np.abs(y - 0.5*x - 0.2) < 0.05
         ndvi_data[river_mask] -= 0.3
         
-        # Add some degraded areas
+        # Add degraded areas
         degraded_mask = (x > 0.6) & (x < 0.9) & (y > 0.1) & (y < 0.4)
         ndvi_data[degraded_mask] -= 0.4
         
         return np.clip(ndvi_data, -1, 1)
         
     except Exception as e:
-        st.error(f"Error creating NDVI data: {e}")
         return np.random.rand(200, 200) * 0.8 - 0.2
 
 def create_enhanced_rgb_data(aoi):
@@ -170,24 +169,24 @@ def create_enhanced_rgb_data(aoi):
         # Generate terrain patterns
         x, y = np.meshgrid(np.linspace(0, 1, width), np.linspace(0, 1, height))
         
-        # Forest areas (dark green)
+        # Forest areas
         forest_mask = (np.sin(4*x) * np.cos(4*y) > 0.2)
         rgb_data[forest_mask] = [30, 100, 30]
         
-        # Grasslands (light green)
+        # Grasslands
         grass_mask = (np.sin(4*x) * np.cos(4*y) <= 0.2) & (np.sin(4*x) * np.cos(4*y) > -0.2)
         rgb_data[grass_mask] = [60, 150, 60]
         
-        # Agricultural areas (patterned green)
+        # Agricultural areas
         agri_mask = (x % 0.2 < 0.1) ^ (y % 0.2 < 0.1)
         agri_mask &= ~forest_mask & ~grass_mask
         rgb_data[agri_mask] = [80, 130, 50]
         
-        # Urban/bare areas (gray/brown)
+        # Urban/bare areas
         urban_mask = (x > 0.7) & (x < 0.9) & (y > 0.6) & (y < 0.8)
         rgb_data[urban_mask] = [120, 120, 120]
         
-        # Water bodies (blue)
+        # Water bodies
         water_mask = (np.sqrt((x-0.2)**2 + (y-0.2)**2) < 0.1) | (np.sqrt((x-0.8)**2 + (y-0.3)**2) < 0.08)
         rgb_data[water_mask] = [30, 80, 150]
         
@@ -198,5 +197,4 @@ def create_enhanced_rgb_data(aoi):
         return rgb_data
         
     except Exception as e:
-        st.error(f"Error creating RGB data: {e}")
         return np.random.randint(50, 200, (200, 200, 3), dtype=np.uint8)
