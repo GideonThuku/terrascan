@@ -2,6 +2,7 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 import planet_handler as data_handler
+import streamlit as st
 import utils
 import numpy as np
 from PIL import Image

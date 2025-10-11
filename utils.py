@@ -48,25 +48,44 @@ def create_report_csv(aoi, degradation_percentage, threshold=0.2):
     elif degradation_percentage < 40:
         health_status = "Moderate"
         recommendation = "Implement conservation measures"
-    else:
-        health_status = "Poor"
-        recommendation = "Urgent restoration needed"
+else:
+    health_status = "Poor"
+    recommendation = "Urgent restoration needed"
 
-    data = {
-        'Metric': [
-            'Report Generated',
-            'Land Health Status',
-            'Vegetation Health Score',
-            'Degraded Area Percentage', 
-            'Healthy Area Percentage',
-            'NDVI Analysis Threshold',
-            'Approximate Area (sq km)',
-            'Bounding Box Min Longitude',
-            'Bounding Box Max Longitude', 
-            'Bounding Box Min Latitude',
-            'Bounding Box Max Latitude',
-            'Recommended Action',
-            'Analysis Confidence'
-        ],
-        'Value': [
-            datetime.now().strftime('%Y-%m-%d %H:%M
+data = {
+    'Metric': [
+        'Report Generated',
+        'Land Health Status',
+        'Vegetation Health Score',
+        'Degraded Area Percentage', 
+        'Healthy Area Percentage',
+        'NDVI Analysis Threshold',
+        'Approximate Area (sq km)',
+        'Bounding Box Min Longitude',
+        'Bounding Box Max Longitude', 
+        'Bounding Box Min Latitude',
+        'Bounding Box Max Latitude',
+        'Recommended Action',
+        'Analysis Confidence'
+    ],
+    'Value': [
+        datetime.now().strftime('%Y-%m-%d %H:%M'),
+        health_status,
+        f"{100 - degradation_percentage:.2f}",
+        f"{degradation_percentage:.2f}",
+        f"{100 - degradation_percentage:.2f}",
+        threshold,
+        f"{area_sq_km:.2f}",
+        min_lon,
+        max_lon,
+        min_lat,
+        max_lat,
+        recommendation,
+        "High"  # Placeholder for confidence
+    ]
+}
+
+df = pd.DataFrame(data)
+csv_filename = "report.csv"
+df.to_csv(csv_filename, index=False)
+return csv_filename
