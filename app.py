@@ -1,7 +1,7 @@
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
-import gee_handler
+import sentinel_handler as data_handler # MODIFIED: Use the new sentinel_handler
 import utils
 
 # --- PAGE CONFIGURATION ---
@@ -35,7 +35,6 @@ with st.sidebar:
     **3. Run Analysis:** Click the button to fetch and process the satellite data.
     """)
     
-    # Adjustable NDVI threshold - our "unique" feature
     ndvi_threshold = st.slider(
         "Degradation Threshold (NDVI)", 
         min_value=0.0, max_value=0.5, value=0.2, step=0.05,
@@ -51,10 +50,8 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.subheader("Area of Interest (AOI)")
     
-    # Create a Folium map centered on a default location (e.g., central Kenya)
     m = folium.Map(location=[-0.0236, 37.9062], zoom_start=7, tiles="CartoDB positron")
 
-    # Add drawing tools to the map
     folium.plugins.Draw(
         export=False,
         draw_options={
@@ -66,13 +63,10 @@ with col1:
             'circlemarker': False
         }).add_to(m)
 
-    # Render the map in Streamlit
     map_data = st_folium(m, height=500, width=700)
 
-    # When a shape is drawn, its data is returned. We store it in session state.
     if map_data and map_data.get("all_drawings"):
         st.session_state.aoi = map_data["all_drawings"][0]['geometry']
-
 
 with col2:
     st.subheader("Analysis Results")
@@ -80,22 +74,22 @@ with col2:
     if analyze_button:
         if st.session_state.aoi:
             with st.spinner("Accessing satellite archives... Please wait."):
-                # Call the GEE handler to get data
-                map_id_ndvi, ndvi_array, map_id_true_color = gee_handler.get_ndvi_data(st.session_state.aoi)
+                # MODIFIED: Call the new Sentinel Hub data handler
+                true_color, ndvi_array = data_handler.get_sentinel_data(st.session_state.aoi)
                 
-                if map_id_ndvi and ndvi_array is not None:
+                if ndvi_array is not None:
                     # Perform classification using the utility function
                     degradation_percent, _ = utils.classify_ndvi(ndvi_array, ndvi_threshold)
                     
                     # Store results in session state
                     st.session_state.analysis_results = {
                         "degradation_percent": degradation_percent,
-                        "map_id_ndvi": map_id_ndvi,
-                        "map_id_true_color": map_id_true_color
+                        "true_color_image": true_color,
+                        "ndvi_array": ndvi_array 
                     }
                     st.success("Analysis complete!")
                 else:
-                    st.error("Could not retrieve data from Google Earth Engine. Please check your AOI or try again later.")
+                    st.error("Could not retrieve data. Please check your AOI or credentials.")
                     st.session_state.analysis_results = None # Clear old results on error
         else:
             st.warning("Please draw an area on the map first.")
@@ -114,24 +108,26 @@ with col2:
         
         st.info(f"Based on an NDVI threshold of **{ndvi_threshold}**")
 
-        # Display satellite imagery tabs
+        # MODIFIED: Display images directly from the NumPy arrays
         tab1, tab2 = st.tabs(["Vegetation Index (NDVI)", "True Color"])
         
         with tab1:
             st.markdown("**Normalized Difference Vegetation Index**")
-            # Get the GEE tile layer URL
-            tile_url_ndvi = f"https://earthengine.googleapis.com/v1alpha/{results['map_id_ndvi']['mapid']}/tiles/{{z}}/{{x}}/{{y}}"
-            # Display it as an image or in a simple map
-            st.image(tile_url_ndvi.replace("{z}", "9").replace("{x}", "268").replace("{y}", "251"), 
-                     caption="Green indicates healthier vegetation, red indicates stress or sparse cover.",
-                     use_column_width=True)
+            # Display the NDVI array directly, using a built-in colormap
+            st.image(
+                results['ndvi_array'], 
+                caption="Higher values (brighter) indicate healthier vegetation.",
+                clamp=True, # Scales colors from 0-1 for better visualization
+                use_column_width=True
+            )
 
         with tab2:
             st.markdown("**Recent True Color Image**")
-            tile_url_true_color = f"https://earthengine.googleapis.com/v1alpha/{results['map_id_true_color']['mapid']}/tiles/{{z}}/{{x}}/{{y}}"
-            st.image(tile_url_true_color.replace("{z}", "9").replace("{x}", "268").replace("{y}", "251"), 
-                     caption="A composite true-color image from recent satellite passes.",
-                     use_column_width=True)
+            st.image(
+                results['true_color_image'], 
+                caption="A composite true-color image from recent satellite passes.",
+                use_column_width=True
+            )
             
         # Generate and provide download button for the CSV report
         csv_data = utils.create_report_csv(st.session_state.aoi, degradation)

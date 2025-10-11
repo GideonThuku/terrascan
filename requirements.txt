@@ -1,7 +1,8 @@
 streamlit
 pandas
 numpy
-earthengine-api
-google-api-python-client
-streamlit-folium
 folium
+streamlit-folium
+sentinelhub
+oauthlib
+scikit-image
