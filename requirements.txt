@@ -3,6 +3,5 @@ pandas
 numpy
 folium
 streamlit-folium
-sentinelhub
-oauthlib
-scikit-image
+requests
+Pillow
