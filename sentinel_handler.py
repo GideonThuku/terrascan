@@ -17,8 +17,8 @@ def configure_sentinel_hub():
     # For local development, set your credentials here.
     # For deployment, you would use Streamlit Secrets like st.secrets["..."]
     # IMPORTANT: Replace "YOUR_CLIENT_ID" and "YOUR_CLIENT_SECRET" below
-    config.sh_client_id = "YOUR_CLIENT_ID" 
-    config.sh_client_secret = "YOUR_CLIENT_SECRET"
+    config.sh_client_id = "f8adae66-fec7-4975-8198-91421bb6f628" 
+    config.sh_client_secret = "a3824279-3ab6-4bb0-9608-83e41120179b"
     
     if not config.sh_client_id or not config.sh_client_secret:
         st.error("Sentinel Hub credentials are not configured. Please add them.")
