@@ -7,6 +7,7 @@ import utils
 import numpy as np
 from PIL import Image
 import time
+import matplotlib.cm as cm  # <-- ADD THIS IMPORT for better color maps
 
 # --- ENHANCED CSS WITH DARK GREEN THEME ---
 def load_css():
@@ -351,8 +352,7 @@ with col1:
     ndvi_threshold = st.slider(
         "**Vegetation Health Sensitivity (NDVI Threshold)**", 
         min_value=0.0, max_value=0.5, value=0.2, step=0.05,
-        help="""**How to choose:** 
-- 0.0-0.1: Very sensitive (detects slight stress)
+        help="""**How to choose:** - 0.0-0.1: Very sensitive (detects slight stress)
 - 0.1-0.2: Balanced (recommended for most areas)  
 - 0.2-0.3: Moderate (detects significant issues)
 - 0.3-0.5: Strict (only severe degradation)"""
@@ -444,9 +444,7 @@ if analyze_button:
                     })
                     
                     progress_placeholder.success("""
-                    ✅ **Analysis Complete!** 
-                    
-                    Your land health assessment is ready. Scroll down to view detailed results, 
+                    ✅ **Analysis Complete!** Your land health assessment is ready. Scroll down to view detailed results, 
                     vegetation maps, and actionable recommendations.
                     """)
                 else:
@@ -575,19 +573,28 @@ if st.session_state.analysis_results:
     
     tab1, tab2 = st.tabs(["🌱 Vegetation Health Map", "🖼️ Satellite Overview"])
     
+    # --- START: THIS IS THE CORRECTED CODE BLOCK ---
     with tab1:
         st.markdown("**Normalized Difference Vegetation Index (NDVI) Analysis**")
         ndvi_display = results['ndvi_array']
         
         if ndvi_display is not None:
-            # Enhanced visualization
+            # Enhanced visualization with a safety check
             ndvi_min = np.nanmin(ndvi_display)
             ndvi_max = np.nanmax(ndvi_display)
-            ndvi_normalized = (ndvi_display - ndvi_min) / (ndvi_max - ndvi_min)
+            
+            # Check to prevent division by zero if the data is uniform
+            if (ndvi_max - ndvi_min) > 0:
+                ndvi_normalized = (ndvi_display - ndvi_min) / (ndvi_max - ndvi_min)
+            else:
+                # If data is uniform, avoid division and just create a zero array
+                ndvi_normalized = np.zeros_like(ndvi_display)
+
             ndvi_normalized = np.nan_to_num(ndvi_normalized, nan=0.0)
             
-            # Convert to PIL Image
-            ndvi_image = Image.fromarray((ndvi_normalized * 255).astype(np.uint8))
+            # Convert to PIL Image using a colormap for better visualization
+            ndvi_image = Image.fromarray((cm.viridis(ndvi_normalized) * 255).astype(np.uint8))
+            
             st.image(ndvi_image, use_column_width=True, 
                     caption=f"**Vegetation Health Visualization** | NDVI Range: {ndvi_min:.3f} to {ndvi_max:.3f}")
             
@@ -600,7 +607,8 @@ if st.session_state.analysis_results:
             - **🟠 Orange:** Stressed vegetation (NDVI 0.0-0.1)
             - **❤️ Red/Dark:** Bare soil/degredation (NDVI < 0.0)
             """)
-    
+    # --- END: CORRECTED CODE BLOCK ---
+
     with tab2:
         st.markdown("**True Color Satellite Imagery**")
         if results['true_color_image'] is not None:
@@ -623,6 +631,7 @@ if st.session_state.analysis_results:
     - Progress monitoring
     """)
     
+    # The create_report_csv function in utils.py returns the file content, not the filename
     csv_data = utils.create_report_csv(st.session_state.aoi, degradation, ndvi_threshold)
     st.download_button(
        label="📥 Download Professional Report (CSV)",
