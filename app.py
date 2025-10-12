@@ -7,7 +7,7 @@ import utils
 import numpy as np
 from PIL import Image
 import time
-import matplotlib.cm as cm  # <-- ADD THIS IMPORT for better color maps
+import matplotlib.cm as cm
 
 # --- ENHANCED CSS WITH DARK GREEN THEME ---
 def load_css():
@@ -391,73 +391,76 @@ st.markdown("""
 
 if analyze_button:
     if st.session_state.aoi:
-        # Enhanced progress tracking
+        # Create placeholders for the progress display
         progress_placeholder = st.empty()
         
-        with progress_placeholder.container():
-            st.markdown("#### 📡 Satellite Analysis Progress")
+        # We will use a single bar and a text element for cleaner updates
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+
+        try:
+            # Step 1: Connection (Simulated)
+            status_text.info("📡 Step 1/3: Connecting to satellite network...")
+            for i in range(33):
+                progress_bar.progress(i)
+                time.sleep(0.01)
+
+            # Step 2: Data Acquisition (Actual API call happens here)
+            status_text.info("🛰️ Step 2/3: Acquiring latest satellite imagery...")
+            true_color, ndvi_array = data_handler.get_planet_data(st.session_state.aoi)
             
-            # Step 1: Connection
-            st.info("**Step 1 of 3:** Establishing secure connection to Planet satellite network...")
-            conn_progress = st.progress(0)
-            for i in range(100):
-                conn_progress.progress(i + 1)
-                time.sleep(0.02)
-            
-            # Step 2: Data acquisition
-            st.info("**Step 2 of 3:** Acquiring latest high-resolution satellite imagery...")
-            data_progress = st.progress(0)
-            for i in range(100):
-                data_progress.progress(i + 1)
-                time.sleep(0.02)
-            
+            # Update progress after the API call returns
+            for i in range(33, 67):
+                progress_bar.progress(i)
+                time.sleep(0.01)
+
             # Step 3: Processing
-            st.info("**Step 3 of 3:** Analyzing vegetation health patterns and calculating metrics...")
-            processing_progress = st.progress(0)
-            
-            # Actual data processing
-            with st.spinner("Performing advanced NDVI analysis and health assessment..."):
-                true_color, ndvi_array = data_handler.get_planet_data(st.session_state.aoi)
+            status_text.info("🌿 Step 3/3: Analyzing vegetation health...")
+            if ndvi_array is not None and true_color is not None:
+                degradation_percent, classified_array = utils.classify_ndvi(ndvi_array, ndvi_threshold)
                 
-                for i in range(100):
-                    processing_progress.progress(i + 1)
+                # Store results
+                st.session_state.analysis_results = {
+                    "degradation_percent": degradation_percent,
+                    "true_color_image": true_color,
+                    "ndvi_array": ndvi_array,
+                    "classified_array": classified_array,
+                    "timestamp": time.time(),
+                    "threshold": ndvi_threshold
+                }
+                
+                # Add to history
+                st.session_state.analysis_history.append({
+                    "degradation": degradation_percent,
+                    "threshold": ndvi_threshold,
+                    "timestamp": time.time()
+                })
+
+                # Finalize progress and show success
+                for i in range(67, 101):
+                    progress_bar.progress(i)
                     time.sleep(0.01)
                 
-                if ndvi_array is not None and true_color is not None:
-                    degradation_percent, classified_array = utils.classify_ndvi(ndvi_array, ndvi_threshold)
-                    
-                    # Store results
-                    st.session_state.analysis_results = {
-                        "degradation_percent": degradation_percent,
-                        "true_color_image": true_color,
-                        "ndvi_array": ndvi_array,
-                        "classified_array": classified_array,
-                        "timestamp": time.time(),
-                        "threshold": ndvi_threshold
-                    }
-                    
-                    # Add to history
-                    st.session_state.analysis_history.append({
-                        "degradation": degradation_percent,
-                        "threshold": ndvi_threshold,
-                        "timestamp": time.time()
-                    })
-                    
-                    progress_placeholder.success("""
-                    ✅ **Analysis Complete!** Your land health assessment is ready. Scroll down to view detailed results, 
-                    vegetation maps, and actionable recommendations.
-                    """)
-                else:
-                    progress_placeholder.error("""
-                    ❌ **Analysis Failed**
-                    
-                    We couldn't retrieve satellite data for your area. This might be because:
-                    - The area is too small
-                    - Cloud cover is too high
-                    - No recent satellite imagery available
-                    
-                    Please try selecting a different area or adjusting the size.
-                    """)
+                # Clear the progress elements and show the final message
+                status_text.empty()
+                progress_bar.empty()
+                progress_placeholder.success("""
+                ✅ **Analysis Complete!** Your land health assessment is ready. Scroll down to view the detailed results.
+                """)
+
+            else:
+                # If data_handler returned None, it means an error occurred
+                # The error message is already displayed by data_handler
+                status_text.empty()
+                progress_bar.empty()
+                # We don't need to show another error message here as planet_handler.py does it.
+                
+        except Exception as e:
+            # Catch any unexpected errors during the process
+            status_text.empty()
+            progress_bar.empty()
+            st.error(f"An unexpected error occurred during analysis: {e}")
+
     else:
         st.warning("""
         ⚠️ **No Area Selected**
@@ -573,7 +576,6 @@ if st.session_state.analysis_results:
     
     tab1, tab2 = st.tabs(["🌱 Vegetation Health Map", "🖼️ Satellite Overview"])
     
-    # --- START: THIS IS THE CORRECTED CODE BLOCK ---
     with tab1:
         st.markdown("**Normalized Difference Vegetation Index (NDVI) Analysis**")
         ndvi_display = results['ndvi_array']
@@ -607,8 +609,7 @@ if st.session_state.analysis_results:
             - **🟠 Orange:** Stressed vegetation (NDVI 0.0-0.1)
             - **❤️ Red/Dark:** Bare soil/degredation (NDVI < 0.0)
             """)
-    # --- END: CORRECTED CODE BLOCK ---
-
+    
     with tab2:
         st.markdown("**True Color Satellite Imagery**")
         if results['true_color_image'] is not None:
@@ -631,8 +632,10 @@ if st.session_state.analysis_results:
     - Progress monitoring
     """)
     
-    # The create_report_csv function in utils.py returns the file content, not the filename
-    csv_data = utils.create_report_csv(st.session_state.aoi, degradation, ndvi_threshold)
+    csv_filename = utils.create_report_csv(st.session_state.aoi, degradation, ndvi_threshold)
+    with open(csv_filename, "r") as f:
+        csv_data = f.read()
+
     st.download_button(
        label="📥 Download Professional Report (CSV)",
        data=csv_data,
