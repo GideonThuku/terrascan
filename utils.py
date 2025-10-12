@@ -38,7 +38,7 @@ def classify_ndvi(ndvi_array, threshold=0.2):
 
 def create_report_csv(aoi, degradation_percentage, threshold=0.2):
     """
-    Generates a comprehensive CSV report.
+    Generates a comprehensive CSV report and returns it as a string.
     """
     coords = aoi['coordinates'][0]
     min_lon = min(p[0] for p in coords)
@@ -95,6 +95,5 @@ def create_report_csv(aoi, degradation_percentage, threshold=0.2):
     }
 
     df = pd.DataFrame(data)
-    csv_filename = "report.csv"
-    df.to_csv(csv_filename, index=False)
-    return csv_filename
+    # Return the CSV content as a string for the download button
+    return df.to_csv(index=False).encode('utf-8')

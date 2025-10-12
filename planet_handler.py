@@ -156,8 +156,6 @@ def create_enhanced_ndvi_data(aoi):
         return np.clip(ndvi_data, -1, 1)
         
     except Exception as e:
-        # --- CHANGE HIGHLIGHTED HERE ---
-        # Ensure fallback data has the same shape
         return np.random.rand(300, 300) * 0.8 - 0.2
 
 def create_enhanced_rgb_data(aoi):
@@ -199,6 +197,4 @@ def create_enhanced_rgb_data(aoi):
         return rgb_data
         
     except Exception as e:
-        # --- CHANGE HIGHLIGHTED HERE ---
-        # Ensure fallback data has the same shape
         return np.random.randint(50, 200, (300, 300, 3), dtype=np.uint8)
