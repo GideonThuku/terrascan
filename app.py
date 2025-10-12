@@ -522,7 +522,7 @@ if st.session_state.analysis_results:
     with col4:
         st.metric(
             label="⚡ Analysis Sensitivity",
-            value=f"NDVI {ndvi_threshold}",
+            value=f"NDVI {results['threshold']}",
             help="Detection threshold used"
         )
     
@@ -618,33 +618,32 @@ if st.session_state.analysis_results:
             st.info("This true-color image shows the actual appearance of your selected area from space.")
     
     # Export Section
-# Export Section
-st.markdown("""
-<div class="section-header">
-    <h2>📤 Export Your Results</h2>
-</div>
-""", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="section-header">
+        <h2>📤 Export Your Results</h2>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    **Download your comprehensive land health report for:**
+    - Professional documentation
+    - Regulatory compliance
+    - Project planning
+    - Progress monitoring
+    """)
+    
+    # The create_report_csv function returns the data directly.
+    # We assign it to a variable and pass it straight to the download button.
+    csv_data = utils.create_report_csv(st.session_state.aoi, degradation, results['threshold'])
 
-st.markdown("""
-**Download your comprehensive land health report for:**
-- Professional documentation
-- Regulatory compliance
-- Project planning
-- Progress monitoring
-""")
-
-# The create_report_csv function returns the data directly.
-# We assign it to a variable and pass it straight to the download button.
-csv_data = utils.create_report_csv(st.session_state.aoi, degradation, ndvi_threshold)
-
-st.download_button(
-   label="📥 Download Professional Report (CSV)",
-   data=csv_data, # Pass the data directly here
-   file_name=f"TerraScan_Report_{time.strftime('%Y%m%d_%H%M')}.csv",
-   mime="text/csv",
-   use_container_width=True,
-   help="Includes all analysis data, coordinates, and recommendations"
-)
+    st.download_button(
+       label="📥 Download Professional Report (CSV)",
+       data=csv_data,
+       file_name=f"TerraScan_Report_{time.strftime('%Y%m%d_%H%M')}.csv",
+       mime="text/csv",
+       use_container_width=True,
+       help="Includes all analysis data, coordinates, and recommendations"
+    )
 
 else:
     # Welcome state - no results yet
